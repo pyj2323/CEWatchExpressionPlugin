@@ -205,11 +205,6 @@
     <ClInclude Include="aobscan.h" />
     <ClInclude Include="cepluginsdk.h" />
     <ClInclude Include="Honoka.h" />
-    <ClInclude Include="lauxlib.h" />
-    <ClInclude Include="lua.h" />
-    <ClInclude Include="lua.hpp" />
-    <ClInclude Include="luaconf.h" />
-    <ClInclude Include="lualib.h" />
     <ClInclude Include="parser.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="stdafx.h" />
