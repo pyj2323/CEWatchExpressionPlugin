@@ -59,9 +59,9 @@ size_t AobscanRange(size_t dwAddress, size_t dwLen, const char *strPattern) {
 		char buffer[0x2000] = {0,};
 		SIZE_T Readed;
 
-		if(ReadProcessMemory((HANDLE)-1, (LPCVOID)i, (LPVOID)buffer, pagesize, &Readed) == FALSE)
+		if(CE_ReadProcessMemory((HANDLE)-1, (LPCVOID)i, (LPVOID)buffer, pagesize, &Readed) == FALSE)
 			continue;	
-		ReadProcessMemory((HANDLE)-1, (LPCVOID)(i + pagesize), (LPVOID)(buffer + pagesize), pagesize, &Readed);
+		CE_ReadProcessMemory((HANDLE)-1, (LPCVOID)(i + pagesize), (LPVOID)(buffer + pagesize), pagesize, &Readed);
 
 		size_t address = (size_t)buffer;
 		while(1) {

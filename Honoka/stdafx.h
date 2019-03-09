@@ -97,10 +97,6 @@ union EFlags {
 	};
 };
 
-#include "parser.h"
-
-//extern HANDLE* g_phDevice;
-
 extern vector<CWatch*> g_WatchList;
 extern size_t* g_pCurrentDebuggerInterface;
 
@@ -189,7 +185,19 @@ typedef struct {
 
 #pragma pack(pop)
 
-BOOL CE_GetThreadContext(HANDLE hThread, PCONTEXT pCtx, BOOL isFrozenThread = TRUE);
+typedef BOOL(__stdcall *TReadProcessMemory)(HANDLE hProcess, LPCVOID lpBaseAddress, LPVOID lpBuffer, SIZE_T nSize, SIZE_T *lpNumberOfBytesRead);
+typedef BOOL(__stdcall *TWriteProcessMemory)(HANDLE hProcess, LPVOID lpBaseAddress, LPCVOID lpBuffer, SIZE_T nSize, SIZE_T *lpNumberOfBytesRead);
+typedef HANDLE(__stdcall *TOpenThread)(DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwThreadId);
 
-void EFlags_SetRF(DWORD& dwFlag, BOOL bValue);
-BOOL DBKDebug_GetDebuggerState(HANDLE hDevice, PCONTEXT pCtx);
+extern TReadProcessMemory* pCE_ReadProcessMemory;
+extern TWriteProcessMemory* pCE_WriteProcessMemory;
+extern TOpenThread* pCE_OpenThread;
+
+#define CE_ReadProcessMemory (*pCE_ReadProcessMemory)
+#define CE_WriteProcessMemory (*pCE_WriteProcessMemory)
+#define CE_OpenThread (*pCE_OpenThread)
+
+#include "parser.h"
+
+BOOL CE_GetThreadContext(HANDLE hThread, PCONTEXT pCtx, BOOL isFrozenThread);
+BOOL CE_SetThreadContext(HANDLE hThread, const PCONTEXT pCtx, BOOL isFrozenThread);

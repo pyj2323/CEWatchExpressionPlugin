@@ -2,13 +2,13 @@
 
 #include "stdafx.h"
 
-typedef enum ParseType {
+enum ParseType {
 	TYPE_UNKNOWN = -1,
 	TYPE_BOOL,
 	TYPE_BYTE, 
 	TYPE_WORD, 
 	TYPE_DWORD, 
-	TYPE_QWORD, 
+	TYPE_QWORD,
 };
 
 struct ParseInfo {
@@ -16,7 +16,7 @@ struct ParseInfo {
 
 	const char* ptr;
 	ParseType type;
-	QWORD value;
+	__int64 value;
 	BOOL bValidPtr;
 
 	ParseInfo() : ptr(0), type(TYPE_QWORD), value(0), bValidPtr(FALSE) {}
@@ -62,7 +62,7 @@ struct ParseInfo {
 
 		SIZE_T nRead;
 		QWORD NewValue = 0;
-		BOOL bResult = ReadProcessMemory(hProcess,(void*)value, &NewValue, nSize, &nRead);
+		BOOL bResult = CE_ReadProcessMemory(hProcess,(void*)value, &NewValue, nSize, &nRead);
 
 		if(bResult && nRead == nSize)
 			return ParseInfo(ptr, nPtrType, NewValue, TRUE);

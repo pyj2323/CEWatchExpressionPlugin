@@ -98,9 +98,7 @@ BEGIN_MESSAGE_MAP(CWatch, CDialog)
 	ON_CBN_SELCHANGE(IDC_COMBO_TYPE, &CWatch::OnCbnSelchangeComboType)
 	ON_BN_CLICKED(IDC_RADIO_OPT2, &CWatch::OnBnClickedRadioOpt2)
 	ON_BN_CLICKED(IDC_RADIO_OPT3, &CWatch::OnBnClickedRadioOpt3)
-//	ON_NOTIFY(HDN_ITEMDBLCLICK, 0, &CWatch::OnItemdblclickListLog)
 ON_NOTIFY(NM_DBLCLK, IDC_LIST_LOG, &CWatch::OnDblclkListLog)
-//ON_NOTIFY(HDN_ITEMDBLCLICK, 0, &CWatch::OnItemdblclickListLog)
 ON_WM_SIZE()
 ON_WM_SIZING()
 ON_WM_GETMINMAXINFO()
@@ -228,98 +226,70 @@ void CWatch::OnCbnSelchangeComboType()
 {
 	OutputType type = (OutputType)m_comboType.GetCurSel();
 
+	//Disable ALL
+	m_editLen.EnableWindow(FALSE);
+	m_editLen.ShowWindow(SW_HIDE);
+
+	m_staticLen.EnableWindow(FALSE);
+	m_staticLen.ShowWindow(SW_HIDE);
+
+	m_radioOpt1.EnableWindow(FALSE);
+	m_radioOpt2.EnableWindow(FALSE);
+	m_radioOpt3.EnableWindow(FALSE);
+	m_radioOpt1.ShowWindow(SW_HIDE);
+	m_radioOpt2.ShowWindow(SW_HIDE);
+	m_radioOpt3.ShowWindow(SW_HIDE);
+
 	switch(type) {
 	case OUTPUT_INTEGER:
-		//Hide length windows
-		m_editLen.EnableWindow(FALSE);
-		m_editLen.ShowWindow(SW_HIDE);
-
-		m_staticLen.EnableWindow(FALSE);
-		m_staticLen.ShowWindow(SW_HIDE);
-
-		//Show radio buttons
 		m_radioOpt1.EnableWindow(TRUE);
-		m_radioOpt1.ShowWindow(SW_NORMAL);
-
 		m_radioOpt2.EnableWindow(TRUE);
-		m_radioOpt2.ShowWindow(SW_NORMAL);
-
 		m_radioOpt3.EnableWindow(TRUE);
-		m_radioOpt3.ShowWindow(SW_NORMAL);
 
-		//Set radio buttons
 		m_radioOpt1.SetWindowText(L"Dec signed");
 		m_radioOpt2.SetWindowText(L"Dec unsigned");
 		m_radioOpt3.SetWindowText(L"Hex");
-
 		m_radioOpt1.SetCheck(m_nIntShowType == OUTPUT_DEC_SIGNED);
 		m_radioOpt2.SetCheck(m_nIntShowType == OUTPUT_DEC_UNSIGNED);
 		m_radioOpt3.SetCheck(m_nIntShowType == OUTPUT_HEX);
+
+		m_radioOpt1.ShowWindow(SW_NORMAL);
+		m_radioOpt2.ShowWindow(SW_NORMAL);
+		m_radioOpt3.ShowWindow(SW_NORMAL);
 		break;
-	case OUTPUT_OPCODE:
+	case OUTPUT_OPCODE:	
+		break;
 	case OUTPUT_FLOAT:
 	case OUTPUT_DOUBLE:
-		//Hide length windows
-		m_editLen.EnableWindow(FALSE);
-		m_editLen.ShowWindow(SW_HIDE);
-
-		m_staticLen.EnableWindow(FALSE);
-		m_staticLen.ShowWindow(SW_HIDE);
-
-		//Hide radio buttons
-		m_radioOpt1.EnableWindow(FALSE);
-		m_radioOpt1.ShowWindow(SW_HIDE);
-
-		m_radioOpt2.EnableWindow(FALSE);
-		m_radioOpt2.ShowWindow(SW_HIDE);
-
-		m_radioOpt3.EnableWindow(FALSE);
-		m_radioOpt3.ShowWindow(SW_HIDE);
 		break;
 	case OUTPUT_STRING:
-		//Show length windows
 		m_editLen.EnableWindow(TRUE);
-		m_editLen.ShowWindow(SW_NORMAL);
-
 		m_staticLen.EnableWindow(TRUE);
-		m_staticLen.ShowWindow(SW_NORMAL);
 
-		//Show radio buttons
 		m_radioOpt1.EnableWindow(TRUE);
-		m_radioOpt1.ShowWindow(SW_NORMAL);
-
 		m_radioOpt2.EnableWindow(TRUE);
-		m_radioOpt2.ShowWindow(SW_NORMAL);
-
 		m_radioOpt3.EnableWindow(TRUE);
-		m_radioOpt3.ShowWindow(SW_NORMAL);
-
-		//Set radio buttons
+		
 		m_radioOpt1.SetWindowText(L"ANSI");
 		m_radioOpt2.SetWindowText(L"UTF-8");
 		m_radioOpt3.SetWindowText(L"UTF-16");
-
 		m_radioOpt1.SetCheck(m_nStrShowType == OUTPUT_ANSI);
 		m_radioOpt2.SetCheck(m_nStrShowType == OUTPUT_UTF8);
 		m_radioOpt3.SetCheck(m_nStrShowType == OUTPUT_UTF16);
-		break;
-	case OUTPUT_AOB:
-		//Hide length windows
-		m_editLen.EnableWindow(TRUE);
-		m_editLen.ShowWindow(SW_NORMAL);
 
-		m_staticLen.EnableWindow(TRUE);
+		m_editLen.ShowWindow(SW_NORMAL);
 		m_staticLen.ShowWindow(SW_NORMAL);
 
-		//Hide radio buttons
-		m_radioOpt1.EnableWindow(FALSE);
-		m_radioOpt1.ShowWindow(SW_HIDE);
+		m_radioOpt1.ShowWindow(SW_NORMAL);
+		m_radioOpt2.ShowWindow(SW_NORMAL);
+		m_radioOpt3.ShowWindow(SW_NORMAL);
+		break;
+	case OUTPUT_AOB:
+		m_editLen.EnableWindow(TRUE);
+		m_staticLen.EnableWindow(TRUE);
 
-		m_radioOpt2.EnableWindow(FALSE);
-		m_radioOpt2.ShowWindow(SW_HIDE);
-
-		m_radioOpt3.EnableWindow(FALSE);
-		m_radioOpt3.ShowWindow(SW_HIDE);
+		m_editLen.ShowWindow(SW_NORMAL);
+		m_staticLen.ShowWindow(SW_NORMAL);
 		break;
 	}
 
@@ -360,18 +330,21 @@ void CWatch::OnBnClickedRadioOpt3()
 }
 
 
-VOID __stdcall SelectMemoryViewAddress(LPVOID parameters) {
-	CStringA* szScript = (CStringA*)parameters;
-	
+VOID __stdcall SelectMemoryViewAddress(LPVOID Address) {
+	CStringA szScript;
+	szScript.Format(
+		"local mv=getMemoryViewForm()\n"
+		"mv.Disassemblerview.SelectedAddress = 0x%I64X\n"
+		"mv.show()\n", Address);
+
 	//This should open a memoryview window at specified address
 	lua_State *lua = (lua_State*)CheatEngine.GetLuaState();
-	if(lua) {
-		int i = lua_gettop(lua);
-		luaL_dostring(lua, *szScript);
-		lua_settop(lua, i);	//restore
-	}
+	if (!lua)
+		return;
 
-	delete szScript;
+	int i = lua_gettop(lua);
+	luaL_dostring(lua, szScript);
+	lua_settop(lua, i);	//restore
 }
 
 void CWatch::OnDblclkListLog(NMHDR *pNMHDR, LRESULT *pResult)
@@ -392,13 +365,9 @@ void CWatch::OnDblclkListLog(NMHDR *pNMHDR, LRESULT *pResult)
 	if(i == -1)
 		return;
 
-	CStringA* szScript = new CStringA();
-	szScript->Format(		
-		"local mv=getMemoryViewForm()\n"
-		"mv.Disassemblerview.SelectedAddress = 0x%ls\n"
-		"mv.show()\n", szValue.Left(i));
-
-	CheatEngine.MainThreadCall(SelectMemoryViewAddress, szScript);
+	LONGLONG Address;
+	if(StrToInt64ExW(CString(L"0x") + szValue.Left(i), STIF_SUPPORT_HEX, &Address))
+		CheatEngine.MainThreadCall(SelectMemoryViewAddress, (LPVOID)Address);
 }
 
 void CWatch::OnSize(UINT nType, int cx, int cy)

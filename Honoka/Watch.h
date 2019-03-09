@@ -1,4 +1,5 @@
 #pragma once
+#include "afxwin.h"
 
 
 // CWatch 대화 상자입니다.

@@ -44,14 +44,14 @@ int __stdcall debugeventplugin(LPDEBUG_EVENT lpDebugEvent)
 	DWORD dwProcessId = lpDebugEvent->dwProcessId;
 	DWORD dwThreadId = lpDebugEvent->dwThreadId;
 
-	HANDLE hThread = OpenThread(THREAD_ALL_ACCESS, FALSE, dwThreadId);
+	HANDLE hThread = CE_OpenThread(THREAD_ALL_ACCESS, FALSE, dwThreadId);
 	if(!hThread)
 		return 0;
 
 	CONTEXT ctx = {0};
 	ctx.ContextFlags = CONTEXT_ALL;
 
-	BOOL bResult = CE_GetThreadContext(hThread, &ctx);
+	BOOL bResult = CE_GetThreadContext(hThread, &ctx, TRUE);
 
 	//Set resume flag
 	//EFlags_SetRF(ctx.EFlags, TRUE);
@@ -85,8 +85,8 @@ int __stdcall debugeventplugin(LPDEBUG_EVENT lpDebugEvent)
 		return 0;
 	}
 
-	for(auto pWatch = g_WatchList.begin() ; pWatch != g_WatchList.end() ; pWatch++) {
-		CWatch& WatchDlg = **pWatch;
+	for(auto pWatch : g_WatchList) {
+		CWatch& WatchDlg = *pWatch;
 		if(WatchDlg.m_pAddress != pExceptionAddress)
 			continue;
 		if(!WatchDlg.m_bCapture)
@@ -97,7 +97,7 @@ int __stdcall debugeventplugin(LPDEBUG_EVENT lpDebugEvent)
 		if(!parser.Parse(WatchDlg.m_szExp, exp_info))
 			continue;
 
-		CString szValue;
+		CStringW szValue;
 
 		if(!exp_info.bValidPtr)
 			szValue = L"Error : read access violation";
@@ -133,19 +133,19 @@ int __stdcall debugeventplugin(LPDEBUG_EVENT lpDebugEvent)
 				}
 				break;
 			case OUTPUT_OPCODE:
-				{
-					char szOutput[0x100];
-					if(CheatEngine.Disassembler(exp_info.value, szOutput, sizeof(szOutput)))
-						szValue = CA2W(szOutput, CP_ACP);
-					else
-						szValue = L"Error : read access violation";
-					break;
-				}
+			{
+				char szOutput[0x100];
+				if (CheatEngine.Disassembler(exp_info.value, szOutput, sizeof(szOutput)))
+					szValue = CA2W(szOutput, CP_ACP);
+				else
+					szValue = L"Error : read access violation";
+				break;
+			}
 			case OUTPUT_FLOAT:
 				{
 					float fValue;
 					SIZE_T nRead;
-					BOOL bResult = ReadProcessMemory(
+					BOOL bResult = CE_ReadProcessMemory(
 						*CheatEngine.OpenedProcessHandle, 
 						(LPCVOID)exp_info.value, &fValue, sizeof(float), &nRead);
 					if(bResult && nRead == sizeof(float))
@@ -158,7 +158,7 @@ int __stdcall debugeventplugin(LPDEBUG_EVENT lpDebugEvent)
 				{
 					double dValue;
 					SIZE_T nRead;
-					BOOL bResult = ReadProcessMemory(
+					BOOL bResult = CE_ReadProcessMemory(
 						*CheatEngine.OpenedProcessHandle, 
 						(LPCVOID)exp_info.value, &dValue, sizeof(double), &nRead);
 					if(bResult && nRead == sizeof(double))
@@ -190,7 +190,7 @@ int __stdcall debugeventplugin(LPDEBUG_EVENT lpDebugEvent)
 							char* szBuf = new char[nLen + 1];
 							szBuf[nLen] = 0;
 
-							BOOL bResult = ReadProcessMemory(
+							BOOL bResult = CE_ReadProcessMemory(
 								*CheatEngine.OpenedProcessHandle,
 								(LPCVOID)exp_info.value, szBuf, nLen, &nRead);
 							if(bResult && nRead == nLen)
@@ -208,7 +208,7 @@ int __stdcall debugeventplugin(LPDEBUG_EVENT lpDebugEvent)
 							char* szBuf = new char[nLen + 1];
 							szBuf[nLen] = 0;
 
-							BOOL bResult = ReadProcessMemory(
+							BOOL bResult = CE_ReadProcessMemory(
 								*CheatEngine.OpenedProcessHandle,
 								(LPCVOID)exp_info.value, szBuf, nLen, &nRead);
 							if(bResult && nRead == nLen)
@@ -225,7 +225,7 @@ int __stdcall debugeventplugin(LPDEBUG_EVENT lpDebugEvent)
 							wchar_t* wBuf = new wchar_t[nLen + 1];
 							wBuf[nLen] = 0;
 
-							BOOL bResult = ReadProcessMemory(
+							BOOL bResult = CE_ReadProcessMemory(
 								*CheatEngine.OpenedProcessHandle,
 								(LPCVOID)exp_info.value, wBuf, nLen, &nRead);
 							if(bResult && nRead == nLen)
@@ -257,7 +257,7 @@ int __stdcall debugeventplugin(LPDEBUG_EVENT lpDebugEvent)
 					BYTE* pBuf = new BYTE[nLen];
 					SIZE_T nRead;
 
-					BOOL bResult = ReadProcessMemory(
+					BOOL bResult = CE_ReadProcessMemory(
 						*CheatEngine.OpenedProcessHandle,
 						(LPCVOID)exp_info.value, pBuf, nLen, &nRead);
 					if(bResult && nRead == nLen) {
@@ -300,11 +300,9 @@ UINT DlgThread(LPVOID lpParam) {
 		g_WatchList.erase(pos);
 
 	BOOL bDeleteBP = TRUE;
-	for(auto pWatch = g_WatchList.begin() ; pWatch != g_WatchList.end() ; pWatch++) {
-		CWatch& WatchDlg = **pWatch;
-		if(WatchDlg.m_pAddress == lpParam)
+	for (auto pWatch : g_WatchList)
+		if(pWatch->m_pAddress == lpParam)
 			bDeleteBP = FALSE;
-	}
 
 	if(bDeleteBP)
 		CheatEngine.debug_removeBreakpoint((UINT_PTR)lpParam);
@@ -363,6 +361,10 @@ BOOL __stdcall CEPlugin_InitializePlugin(PExportedFunctions ef , int pluginid)
 		return FALSE;
 	}
 
+	pCE_ReadProcessMemory = (TReadProcessMemory*)CheatEngine.ReadProcessMemory;
+	pCE_WriteProcessMemory = (TWriteProcessMemory*)CheatEngine.WriteProcessMemory;
+	pCE_OpenThread = (TOpenThread*)CheatEngine.OpenThread;
+
 	/*
 	size_t Result = AobscanModule(GetModuleHandle(0), "48 83 3D ? ? ? ? 00 74 1C 48 ? ? 48");
 	if(Result == 0) {
@@ -379,7 +381,6 @@ BOOL __stdcall CEPlugin_InitializePlugin(PExportedFunctions ef , int pluginid)
 		return FALSE;
 	}
 	g_pCurrentDebuggerInterface = (size_t*)(Result + 0x7 + *(PDWORD)(Result + 0x3));
-
 	return TRUE;
 }
 
@@ -395,10 +396,8 @@ BOOL __stdcall CEPlugin_DisablePlugin(void)
 {
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
-	for(auto pWatch = g_WatchList.begin() ; pWatch != g_WatchList.end() ; pWatch++) {
-		CWatch& WatchDlg = **pWatch;
-		WatchDlg.PostMessage(WM_CLOSE);
-	}
+	for (auto pWatch : g_WatchList)
+		pWatch->PostMessage(WM_CLOSE);
 
 	while(g_WatchList.size())
 		Sleep(1);

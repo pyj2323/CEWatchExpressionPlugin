@@ -39,3 +39,4 @@
 *.ipdb
 *.iobj
 *.exp
+*.map
