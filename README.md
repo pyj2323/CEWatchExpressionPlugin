@@ -1,3 +1,3 @@
 WatchExpression CE Plugin
 
-VS 2010++ required to build
+VS 2015++ required to build
