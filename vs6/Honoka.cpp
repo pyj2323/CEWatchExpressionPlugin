@@ -97,6 +97,7 @@ int __stdcall debugeventplugin(LPDEBUG_EVENT lpDebugEvent)
 			continue;
 
 		CString szValue;
+		char szBuffer[0x201];
 		WCHAR wBuffer[0x201];
 
 		if(!exp_info.bValidPtr)
@@ -134,9 +135,8 @@ int __stdcall debugeventplugin(LPDEBUG_EVENT lpDebugEvent)
 				break;
 			case OUTPUT_OPCODE:
 			{
-				char szOutput[0x100];
-				if (CheatEngine.Disassembler(exp_info.value, szOutput, sizeof(szOutput))) {
-					MultiByteToWideChar(CP_ACP, 0, szOutput, -1, wBuffer, sizeof(wBuffer));
+				if (CheatEngine.Disassembler(exp_info.value, szBuffer, sizeof(szBuffer))) {
+					MultiByteToWideChar(CP_ACP, 0, szBuffer, -1, wBuffer, sizeof(wBuffer));
 					szValue = wBuffer;
 				}
 				else
@@ -184,62 +184,57 @@ int __stdcall debugeventplugin(LPDEBUG_EVENT lpDebugEvent)
 					}
 
 					SIZE_T nRead;
+					SIZE_T nLen = len_info.value;
 
 					switch(WatchDlg.m_nStrShowType) {
 					case OUTPUT_ANSI:
 						{
-							SIZE_T nLen = len_info.value * sizeof(char);
-							char* szBuf = new char[nLen + 1];
-							szBuf[nLen] = 0;
-
 							BOOL bResult = CE_ReadProcessMemory(
 								*CheatEngine.OpenedProcessHandle,
-								(LPCVOID)exp_info.value, szBuf, nLen, &nRead);
+								(LPCVOID)exp_info.value, szBuffer, nLen, &nRead);
+
+							szBuffer[nLen] = 0;
+
 							if(bResult && nRead == nLen) {
-								MultiByteToWideChar(CP_ACP, 0, szBuf, -1, wBuffer, sizeof(wBuffer));
-								szValue = CString(L"\"") + wBuffer + L"\"";
+								MultiByteToWideChar(CP_ACP, 0, szBuffer, -1, wBuffer, sizeof(wBuffer));
+								szValue.Format(L"\"%ws\"", wBuffer);
 							}
 							else
 								szValue = L"Error : read access violation";
 
-							delete[] szBuf;
 							break;
 						}
 
 					case OUTPUT_UTF8:
 						{
-							SIZE_T nLen = len_info.value * sizeof(char);
-							char* szBuf = new char[nLen + 1];
-							szBuf[nLen] = 0;
-
 							BOOL bResult = CE_ReadProcessMemory(
 								*CheatEngine.OpenedProcessHandle,
-								(LPCVOID)exp_info.value, szBuf, nLen, &nRead);
+								(LPCVOID)exp_info.value, szBuffer, nLen, &nRead);
+
+							szBuffer[nLen] = 0;
+
 							if(bResult && nRead == nLen) {
-								MultiByteToWideChar(CP_UTF8, 0, szBuf, -1, wBuffer, sizeof(wBuffer));
-								szValue = CString(L"\"") + wBuffer + L"\"";
+								MultiByteToWideChar(CP_UTF8, 0, szBuffer, -1, wBuffer, sizeof(wBuffer));
+								szValue.Format(L"\"%ws\"", wBuffer);
 							}
 							else
 								szValue = L"Error : read access violation";
 
-							delete[] szBuf;
 							break;
 						}
 					case OUTPUT_UTF16:
 						{
-							SIZE_T nLen =len_info.value * sizeof(wchar_t);
-							wchar_t* wBuf = new wchar_t[nLen + 1];
-							wBuf[nLen] = 0;
-
 							BOOL bResult = CE_ReadProcessMemory(
 								*CheatEngine.OpenedProcessHandle,
-								(LPCVOID)exp_info.value, wBuf, nLen, &nRead);
-							if(bResult && nRead == nLen)
-								szValue = CString(L"\"") + wBuf + L"\"";
+								(LPCVOID)exp_info.value, wBuffer, nLen * sizeof(WCHAR), &nRead);
+
+							wBuffer[nLen] = 0;
+
+							if(bResult && nRead == nLen * sizeof(WCHAR))
+								szValue.Format(L"\"%ws\"", wBuffer);
 							else
 								szValue = L"Error : read access violation";
 
-							delete[] wBuf;
 							break;
 						}
 					}
@@ -250,8 +245,8 @@ int __stdcall debugeventplugin(LPDEBUG_EVENT lpDebugEvent)
 					ParseInfo len_info;
 					if(!parser.Parse(WatchDlg.m_szLen, len_info))
 						break;
-					if(!len_info.bValidPtr || len_info.value >= 0x200) {
-						szValue = L"Error : length must be less than 512.";
+					if(!len_info.bValidPtr || len_info.value >= 150) {
+						szValue = L"Error : length must be less than 150.";
 						break;
 					}
 					if(len_info.value == 0) {
@@ -260,16 +255,16 @@ int __stdcall debugeventplugin(LPDEBUG_EVENT lpDebugEvent)
 					}
 
 					SIZE_T nLen = len_info.value;
-					BYTE* pBuf = new BYTE[nLen];
 					SIZE_T nRead;
 
 					BOOL bResult = CE_ReadProcessMemory(
 						*CheatEngine.OpenedProcessHandle,
-						(LPCVOID)exp_info.value, pBuf, nLen, &nRead);
+						(LPCVOID)exp_info.value, szBuffer, nLen, &nRead);
+
 					if(bResult && nRead == nLen) {
 						CString szByte;
 						for(int i = 0 ; i < nLen ; i++) {
-							szByte.Format(L"%02X", pBuf[i]);
+							szByte.Format(L"%02X", szBuffer[i]);
 							szValue += szByte;
 							if(i < nLen - 1)
 								szValue += L" ";
@@ -278,7 +273,6 @@ int __stdcall debugeventplugin(LPDEBUG_EVENT lpDebugEvent)
 					else
 						szValue = L"Error : read access violation";
 
-					delete[] pBuf;
 					break;
 				}
 			}
@@ -320,7 +314,7 @@ UINT DlgThread(LPVOID lpParam) {
 }
 
 char buffer[0x100];
-BOOL __stdcall OnDisassemblerPopup(ULONG selectedAddress, char **addressofname, BOOL *show) {
+BOOL __stdcall OnDisassemblerPopup(UINT_PTR selectedAddress, char **addressofname, BOOL *show) {
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
 	UINT_PTR pAddress = *(UINT_PTR*)selectedAddress;

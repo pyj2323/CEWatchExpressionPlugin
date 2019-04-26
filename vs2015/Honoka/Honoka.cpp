@@ -311,7 +311,7 @@ UINT DlgThread(LPVOID lpParam) {
 }
 
 char buffer[0x100];
-BOOL __stdcall OnDisassemblerPopup(ULONG selectedAddress, char **addressofname, BOOL *show) {
+BOOL __stdcall OnDisassemblerPopup(UINT_PTR selectedAddress, char **addressofname, BOOL *show) {
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
 	UINT_PTR pAddress = *(UINT_PTR*)selectedAddress;

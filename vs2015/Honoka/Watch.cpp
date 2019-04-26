@@ -4,13 +4,11 @@
 #include "stdafx.h"
 #include "Honoka.h"
 #include "Watch.h"
-#include "afxdialogex.h"
+//#include "afxdialogex.h"
 
 
 #define INDEX_COUNT 0
 #define INDEX_VALUE 1
-
-
 
 // CWatch 대화 상자입니다.
 
@@ -23,6 +21,7 @@ CWatch::CWatch(PVOID pAddress, CWnd* pParent /*=NULL*/)
 	m_nIntShowType = OUTPUT_DEC_SIGNED;
 	m_nStrShowType = OUTPUT_ANSI;
 	m_bCapture = FALSE;
+	m_bRect = FALSE;
 }
 
 BOOL CWatch::OnInitDialog()
@@ -31,15 +30,16 @@ BOOL CWatch::OnInitDialog()
 
 	GetWindowRect(&m_DlgRect);
 	m_listLog.GetWindowRect(&m_ListRect);
+	m_bRect = TRUE;
 
 	BOOL bWow64 = FALSE;
-	if(!IsWow64Process(*CheatEngine.OpenedProcessHandle, &bWow64)) {
+	if (!IsWow64Process(*CheatEngine.OpenedProcessHandle, &bWow64)) {
 		MessageBox(L"Open a process first.", 0, MB_ICONERROR);
 		return FALSE;
 	}
 
 	CString szTitle;
-	if(bWow64)
+	if (bWow64)
 		szTitle.Format(L"Watch expression at address %08I64X", m_pAddress);
 	else
 		szTitle.Format(L"Watch expression at address %016I64X", m_pAddress);
@@ -91,17 +91,17 @@ void CWatch::DoDataExchange(CDataExchange* pDX)
 
 BEGIN_MESSAGE_MAP(CWatch, CDialog)
 	ON_WM_CLOSE()
-	ON_BN_CLICKED(IDC_BUTTON_STATE, &CWatch::OnBnClickedButtonState)
-	ON_MESSAGE(WM_GETCONTEXT, &CWatch::OnGetcontext)
-	ON_BN_CLICKED(IDC_BUTTON_CLEAR, &CWatch::OnBnClickedButtonClear)
-	ON_BN_CLICKED(IDC_RADIO_OPT1, &CWatch::OnBnClickedRadioOpt1)
-	ON_CBN_SELCHANGE(IDC_COMBO_TYPE, &CWatch::OnCbnSelchangeComboType)
-	ON_BN_CLICKED(IDC_RADIO_OPT2, &CWatch::OnBnClickedRadioOpt2)
-	ON_BN_CLICKED(IDC_RADIO_OPT3, &CWatch::OnBnClickedRadioOpt3)
-ON_NOTIFY(NM_DBLCLK, IDC_LIST_LOG, &CWatch::OnDblclkListLog)
-ON_WM_SIZE()
-ON_WM_SIZING()
-ON_WM_GETMINMAXINFO()
+	ON_BN_CLICKED(IDC_BUTTON_STATE, CWatch::OnBnClickedButtonState)
+	ON_MESSAGE(WM_GETCONTEXT, CWatch::OnGetcontext)
+	ON_BN_CLICKED(IDC_BUTTON_CLEAR, CWatch::OnBnClickedButtonClear)
+	ON_BN_CLICKED(IDC_RADIO_OPT1, CWatch::OnBnClickedRadioOpt1)
+	ON_CBN_SELCHANGE(IDC_COMBO_TYPE, CWatch::OnCbnSelchangeComboType)
+	ON_BN_CLICKED(IDC_RADIO_OPT2, CWatch::OnBnClickedRadioOpt2)
+	ON_BN_CLICKED(IDC_RADIO_OPT3, CWatch::OnBnClickedRadioOpt3)
+	ON_NOTIFY(NM_DBLCLK, IDC_LIST_LOG, CWatch::OnDblclkListLog)
+	ON_WM_SIZE()
+	ON_WM_SIZING()
+	ON_WM_GETMINMAXINFO()
 END_MESSAGE_MAP()
 
 
@@ -109,7 +109,7 @@ BOOL ParseInfo::bX86 = 0;
 
 void CWatch::OnBnClickedButtonState()
 {
-	if(m_bCapture) {
+	if (m_bCapture) {
 		m_btnState.SetWindowText(L"Start");
 		m_editExp.EnableWindow(TRUE);
 		m_comboType.EnableWindow(TRUE);
@@ -122,52 +122,48 @@ void CWatch::OnBnClickedButtonState()
 	}
 
 	BOOL bWow64;
-	if(!IsWow64Process(*CheatEngine.OpenedProcessHandle, &bWow64)) {
+	if (!IsWow64Process(*CheatEngine.OpenedProcessHandle, &bWow64)) {
 		MessageBox(L"OpenProcess Failed.\n", L"Error", MB_ICONERROR);
 		return;
 	}
 
 	ParseInfo::bX86 = bWow64;
 
-	CStringW wExp;
-	m_editExp.GetWindowText(wExp);
-	m_szExp = CW2A(wExp, CP_ACP);
+	m_editExp.GetWindowText(m_szExp);
 
-	CONTEXT ctx = {0};
+	CONTEXT ctx = { 0 };
 	Parser parser(ctx);
 	ParseInfo exp_info;
 
-	if(!parser.Parse(m_szExp, exp_info)) {
+	if (!parser.Parse(m_szExp, exp_info)) {
 		MessageBox(L"Parsing expression failed.", L"Error", MB_ICONERROR);
 		return;
 	}
 
-	switch(m_nType) {
+	switch (m_nType) {
 	case OUTPUT_INTEGER:
 		break;
 	case OUTPUT_STRING:
 	case OUTPUT_AOB:
-		{
-			CStringW wLen;
-			m_editLen.GetWindowText(wLen);
-			m_szLen = CW2A(wLen, CP_ACP);
+	{
+		m_editLen.GetWindowText(m_szLen);
 
-			ParseInfo len_info;
-			if(!parser.Parse(m_szLen, len_info)) {
-				MessageBox(L"Parsing data length failed.", L"Error", MB_ICONERROR);
-				return;
-			}
-		}	
+		ParseInfo len_info;
+		if (!parser.Parse(m_szLen, len_info)) {
+			MessageBox(L"Parsing data length failed.", L"Error", MB_ICONERROR);
+			return;
+		}
+	}
 	case OUTPUT_OPCODE:
 	case OUTPUT_FLOAT:
 	case OUTPUT_DOUBLE:
 		//Pointer type checking
-		if(m_nType != OUTPUT_INTEGER) {
-			if(bWow64 && exp_info.type != TYPE_DWORD) {
+		if (m_nType != OUTPUT_INTEGER) {
+			if (bWow64 && exp_info.type != TYPE_DWORD) {
 				MessageBox(L"4 bytes(DWORD) pointer required.", L"Error", MB_ICONERROR);
 				return;
 			}
-			if(!bWow64 && exp_info.type != TYPE_QWORD) {
+			if (!bWow64 && exp_info.type != TYPE_QWORD) {
 				MessageBox(L"8 bytes(QWORD) pointer required.", L"Error", MB_ICONERROR);
 				return;
 			}
@@ -194,15 +190,15 @@ afx_msg LRESULT CWatch::OnGetcontext(WPARAM wParam, LPARAM lParam)
 	BOOL bExist = FALSE;
 
 	int i;
-	for(i = 0 ; i < m_listLog.GetItemCount() ; i++) {
+	for (i = 0; i < m_listLog.GetItemCount(); i++) {
 		CString szItemValue = m_listLog.GetItemText(i, INDEX_VALUE);
-		if(szValue == szItemValue) {
+		if (szValue == szItemValue) {
 			bExist = TRUE;
 			break;
 		}
 	}
 
-	if(bExist) {
+	if (bExist) {
 		//Add count
 		CString szCount = m_listLog.GetItemText(i, INDEX_COUNT);
 		UINT uCnt = _wtoi(szCount);
@@ -240,7 +236,7 @@ void CWatch::OnCbnSelchangeComboType()
 	m_radioOpt2.ShowWindow(SW_HIDE);
 	m_radioOpt3.ShowWindow(SW_HIDE);
 
-	switch(type) {
+	switch (type) {
 	case OUTPUT_INTEGER:
 		m_radioOpt1.EnableWindow(TRUE);
 		m_radioOpt2.EnableWindow(TRUE);
@@ -257,7 +253,7 @@ void CWatch::OnCbnSelchangeComboType()
 		m_radioOpt2.ShowWindow(SW_NORMAL);
 		m_radioOpt3.ShowWindow(SW_NORMAL);
 		break;
-	case OUTPUT_OPCODE:	
+	case OUTPUT_OPCODE:
 		break;
 	case OUTPUT_FLOAT:
 	case OUTPUT_DOUBLE:
@@ -269,7 +265,7 @@ void CWatch::OnCbnSelchangeComboType()
 		m_radioOpt1.EnableWindow(TRUE);
 		m_radioOpt2.EnableWindow(TRUE);
 		m_radioOpt3.EnableWindow(TRUE);
-		
+
 		m_radioOpt1.SetWindowText(L"ANSI");
 		m_radioOpt2.SetWindowText(L"UTF-8");
 		m_radioOpt3.SetWindowText(L"UTF-16");
@@ -297,7 +293,7 @@ void CWatch::OnCbnSelchangeComboType()
 }
 void CWatch::OnBnClickedRadioOpt1()
 {
-	switch(m_nType) {
+	switch (m_nType) {
 	case OUTPUT_INTEGER:
 		m_nIntShowType = OUTPUT_DEC_SIGNED;
 		break;
@@ -308,7 +304,7 @@ void CWatch::OnBnClickedRadioOpt1()
 }
 void CWatch::OnBnClickedRadioOpt2()
 {
-	switch(m_nType) {
+	switch (m_nType) {
 	case OUTPUT_INTEGER:
 		m_nIntShowType = OUTPUT_DEC_UNSIGNED;
 		break;
@@ -319,7 +315,7 @@ void CWatch::OnBnClickedRadioOpt2()
 }
 void CWatch::OnBnClickedRadioOpt3()
 {
-	switch(m_nType) {
+	switch (m_nType) {
 	case OUTPUT_INTEGER:
 		m_nIntShowType = OUTPUT_HEX;
 		break;
@@ -331,11 +327,11 @@ void CWatch::OnBnClickedRadioOpt3()
 
 
 VOID __stdcall SelectMemoryViewAddress(LPVOID Address) {
-	CStringA szScript;
-	szScript.Format(
+	char szScript[0x100];
+	sprintf(szScript,
 		"local mv=getMemoryViewForm()\n"
 		"mv.Disassemblerview.SelectedAddress = 0x%I64X\n"
-		"mv.show()\n", Address);
+		"mv.show()\n", (DWORD64)Address);
 
 	//This should open a memoryview window at specified address
 	lua_State *lua = (lua_State*)CheatEngine.GetLuaState();
@@ -353,7 +349,7 @@ void CWatch::OnDblclkListLog(NMHDR *pNMHDR, LRESULT *pResult)
 	*pResult = 0;
 
 	POSITION pos = m_listLog.GetFirstSelectedItemPosition();
-	if(pos == NULL)
+	if (pos == NULL)
 		return;
 
 	int nItem = m_listLog.GetNextSelectedItem(pos);
@@ -362,17 +358,19 @@ void CWatch::OnDblclkListLog(NMHDR *pNMHDR, LRESULT *pResult)
 	int i = -1;
 
 	i = szValue.Find(L" - ", 0);
-	if(i == -1)
+	if (i == -1)
 		return;
 
-	LONGLONG Address;
-	if(StrToInt64ExW(CString(L"0x") + szValue.Left(i), STIF_SUPPORT_HEX, &Address))
+	DWORD64 Address;
+	if (swscanf(CString(L"0x") + szValue.Left(i), L"%I64X", &Address) == 1)
 		CheatEngine.MainThreadCall(SelectMemoryViewAddress, (LPVOID)Address);
 }
 
 void CWatch::OnSize(UINT nType, int cx, int cy)
 {
 	CDialog::OnSize(nType, cx, cy);
+	if (!m_bRect)
+		return;
 
 	CRect DlgRect, ListRect;
 	GetWindowRect(&DlgRect);
@@ -394,6 +392,8 @@ void CWatch::OnSize(UINT nType, int cx, int cy)
 void CWatch::OnSizing(UINT fwSide, LPRECT pRect)
 {
 	CDialog::OnSizing(fwSide, pRect);
+	if (!m_bRect)
+		return;
 
 	CRect DlgRect, ListRect;
 	GetWindowRect(&DlgRect);
@@ -414,8 +414,10 @@ void CWatch::OnSizing(UINT fwSide, LPRECT pRect)
 
 void CWatch::OnGetMinMaxInfo(MINMAXINFO* lpMMI)
 {
-	// TODO: 여기에 메시지 처리기 코드를 추가 및/또는 기본값을 호출합니다.
+	CDialog::OnGetMinMaxInfo(lpMMI);
+	if (!m_bRect)
+		return;
+
 	lpMMI->ptMinTrackSize.x = m_DlgRect.Width();
 	lpMMI->ptMinTrackSize.y = m_DlgRect.Height();
-	CDialog::OnGetMinMaxInfo(lpMMI);
 }

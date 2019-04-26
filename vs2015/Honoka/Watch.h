@@ -33,7 +33,7 @@ public:
 	CWatch(PVOID pAddress, CWnd* pParent = NULL);
 	virtual ~CWatch();
 
-// 대화 상자 데이터입니다.
+	// 대화 상자 데이터입니다.
 	enum { IDD = IDD_WATCH };
 
 	PVOID m_pAddress;
@@ -41,11 +41,13 @@ public:
 	OutputType m_nType;
 	IntShowType m_nIntShowType;
 	StrShowType m_nStrShowType;
+
+	BOOL m_bRect;
 	CRect m_DlgRect;
 	CRect m_ListRect;
 
-	CStringA m_szExp;
-	CStringA m_szLen;
+	CString m_szExp;
+	CString m_szLen;
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 지원입니다.
