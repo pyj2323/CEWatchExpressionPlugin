@@ -63,7 +63,7 @@ extern int g_DisassemblerID;
 extern ExportedFunctions CheatEngine;
 
 #include "lua530\lua.hpp"
-#pragma comment(lib, "lua53.lib")
+#pragma comment(lib, "lua530.lib")
 
 #if (_MSC_VER >= 1900)
 #pragma comment(lib, "legacy_stdio_definitions.lib")
