@@ -89,12 +89,12 @@ LINK32=link.exe
 # PROP BASE Target_Dir ""
 # PROP Use_MFC 6
 # PROP Use_Debug_Libraries 0
-# PROP Output_Dir "Honoka___Win32_Release64"
-# PROP Intermediate_Dir "Honoka___Win32_Release64"
+# PROP Output_Dir "Release64"
+# PROP Intermediate_Dir "Release64"
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MD /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_WINDLL" /D "_AFXDLL" /D "_MBCS" /D "_USRDLL" /Yu"stdafx.h" /FD /c
-# ADD CPP /nologo /MD /w /W0 /GX /O1 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "_UNICODE" /D "_WINDLL" /D "_AFXDLL" /FR /Yu"stdafx.h" /FD /c
+# ADD CPP /nologo /MD /w /W0 /O1 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "_UNICODE" /D "_WINDLL" /D "_AFXDLL" /FR /Yu"stdafx.h" /FD /EHsc /c
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x412 /d "NDEBUG" /d "_AFXDLL"

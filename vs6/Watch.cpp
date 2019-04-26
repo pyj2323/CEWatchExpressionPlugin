@@ -10,8 +10,6 @@
 #define INDEX_COUNT 0
 #define INDEX_VALUE 1
 
-
-
 extern "C" BOOL IsWow64Process(HANDLE hProcess, PBOOL Wow64Process);
 
 // CWatch 대화 상자입니다.
@@ -25,6 +23,7 @@ CWatch::CWatch(PVOID pAddress, CWnd* pParent /*=NULL*/)
 	m_nIntShowType = OUTPUT_DEC_SIGNED;
 	m_nStrShowType = OUTPUT_ANSI;
 	m_bCapture = FALSE;
+	m_bRect = FALSE;
 }
 
 BOOL CWatch::OnInitDialog()
@@ -33,6 +32,7 @@ BOOL CWatch::OnInitDialog()
 
 	GetWindowRect(&m_DlgRect);
 	m_listLog.GetWindowRect(&m_ListRect);
+	m_bRect = TRUE;
 
 	BOOL bWow64 = FALSE;
 	if(!IsWow64Process(*CheatEngine.OpenedProcessHandle, &bWow64)) {
@@ -187,7 +187,7 @@ void CWatch::OnBnClickedButtonState()
 afx_msg LRESULT CWatch::OnGetcontext(WPARAM wParam, LPARAM lParam)
 {
 	CString szValue = (const wchar_t*)wParam;
-	delete[] (const wchar_t*)wParam;
+	delete (const wchar_t*)wParam;
 
 	BOOL bExist = FALSE;
 
@@ -330,7 +330,7 @@ void CWatch::OnBnClickedRadioOpt3()
 
 VOID __stdcall SelectMemoryViewAddress(LPVOID Address) {
 	char szScript[0x100];
-	sprintf(szScript, 
+	sprintf(szScript,
 		"local mv=getMemoryViewForm()\n"
 		"mv.Disassemblerview.SelectedAddress = 0x%I64X\n"
 		"mv.show()\n", Address);
@@ -363,15 +363,16 @@ void CWatch::OnDblclkListLog(NMHDR *pNMHDR, LRESULT *pResult)
 	if(i == -1)
 		return;
 
-	LPVOID Address;
-
+	DWORD64 Address;
 	if(swscanf(CString(L"0x") + szValue.Left(i), L"%I64X", &Address) == 1)
-		CheatEngine.MainThreadCall(SelectMemoryViewAddress, Address);
+		CheatEngine.MainThreadCall(SelectMemoryViewAddress, (LPVOID)Address);
 }
 
 void CWatch::OnSize(UINT nType, int cx, int cy)
 {
 	CDialog::OnSize(nType, cx, cy);
+	if(!m_bRect)
+		return;
 
 	CRect DlgRect, ListRect;
 	GetWindowRect(&DlgRect);
@@ -393,6 +394,8 @@ void CWatch::OnSize(UINT nType, int cx, int cy)
 void CWatch::OnSizing(UINT fwSide, LPRECT pRect)
 {
 	CDialog::OnSizing(fwSide, pRect);
+	if(!m_bRect)
+		return;
 
 	CRect DlgRect, ListRect;
 	GetWindowRect(&DlgRect);
@@ -413,8 +416,10 @@ void CWatch::OnSizing(UINT fwSide, LPRECT pRect)
 
 void CWatch::OnGetMinMaxInfo(MINMAXINFO* lpMMI)
 {
-	// TODO: 여기에 메시지 처리기 코드를 추가 및/또는 기본값을 호출합니다.
+	CDialog::OnGetMinMaxInfo(lpMMI);
+	if(!m_bRect)
+		return;
+
 	lpMMI->ptMinTrackSize.x = m_DlgRect.Width();
 	lpMMI->ptMinTrackSize.y = m_DlgRect.Height();
-	CDialog::OnGetMinMaxInfo(lpMMI);
 }

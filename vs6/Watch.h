@@ -41,6 +41,8 @@ public:
 	OutputType m_nType;
 	IntShowType m_nIntShowType;
 	StrShowType m_nStrShowType;
+
+	BOOL m_bRect;
 	CRect m_DlgRect;
 	CRect m_ListRect;
 
