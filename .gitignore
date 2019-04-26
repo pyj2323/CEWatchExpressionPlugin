@@ -39,3 +39,7 @@
 *.iobj
 *.exp
 *.map
+*.ncb
+*.plg
+*.sbr
+*.idb
