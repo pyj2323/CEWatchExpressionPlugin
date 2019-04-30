@@ -15,11 +15,9 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="ReadMe.txt" />
     <None Include="Honoka.def">
       <Filter>소스 파일</Filter>
     </None>
-    <None Include="ClassDiagram1.cd" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Honoka.cpp">
@@ -32,6 +30,9 @@
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="aobscan.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="MyListCtrl.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
@@ -58,6 +59,9 @@
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="parser.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="MyListCtrl.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>

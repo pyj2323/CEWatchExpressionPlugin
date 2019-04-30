@@ -1,42 +1,45 @@
-// stdafx.h : include file for standard system include files,
-//  or project specific include files that are used frequently, but
-//      are changed infrequently
-//
+// stdafx.h : 자주 사용하지만 자주 변경되지는 않는
+// 표준 시스템 포함 파일 및 프로젝트 관련 포함 파일이
+// 들어 있는 포함 파일입니다.
+
+#pragma once
+
+#ifndef VC_EXTRALEAN
+#define VC_EXTRALEAN            // 거의 사용되지 않는 내용은 Windows 헤더에서 제외합니다.
+#endif
+
+#include "targetver.h"
 
 #define _AFX_NO_DB_SUPPORT
 #define _AFX_NO_DAO_SUPPORT
 
-#if !defined(AFX_STDAFX_H__57FCF902_50F3_49D6_A00A_6DC58836F9CC__INCLUDED_)
-#define AFX_STDAFX_H__57FCF902_50F3_49D6_A00A_6DC58836F9CC__INCLUDED_
+#define _ATL_CSTRING_EXPLICIT_CONSTRUCTORS      // 일부 CString 생성자는 명시적으로 선언됩니다.
 
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
-
-#define VC_EXTRALEAN		// Exclude rarely-used stuff from Windows headers
-
-#include <afxwin.h>         // MFC core and standard components
-#include <afxext.h>         // MFC extensions
+#include <afxwin.h>         // MFC 핵심 및 표준 구성 요소입니다.
+#include <afxext.h>         // MFC 확장입니다.
 
 #ifndef _AFX_NO_OLE_SUPPORT
-#include <afxole.h>         // MFC OLE classes
-#include <afxodlgs.h>       // MFC OLE dialog classes
-#include <afxdisp.h>        // MFC Automation classes
+#include <afxole.h>         // MFC OLE 클래스입니다.
+#include <afxodlgs.h>       // MFC OLE 대화 상자 클래스입니다.
+#include <afxdisp.h>        // MFC 자동화 클래스입니다.
 #endif // _AFX_NO_OLE_SUPPORT
 
-
 #ifndef _AFX_NO_DB_SUPPORT
-#include <afxdb.h>			// MFC ODBC database classes
+#include <afxdb.h>                      // MFC ODBC 데이터베이스 클래스입니다.
 #endif // _AFX_NO_DB_SUPPORT
 
 #ifndef _AFX_NO_DAO_SUPPORT
-#include <afxdao.h>			// MFC DAO database classes
+#include <afxdao.h>                     // MFC DAO 데이터베이스 클래스입니다.
 #endif // _AFX_NO_DAO_SUPPORT
 
-#include <afxdtctl.h>		// MFC support for Internet Explorer 4 Common Controls
+#ifndef _AFX_NO_OLE_SUPPORT
+#include <afxdtctl.h>           // Internet Explorer 4 공용 컨트롤에 대한 MFC 지원입니다.
+#endif
 #ifndef _AFX_NO_AFXCMN_SUPPORT
-#include <afxcmn.h>			// MFC support for Windows Common Controls
+#include <afxcmn.h>                     // Windows 공용 컨트롤에 대한 MFC 지원입니다.
 #endif // _AFX_NO_AFXCMN_SUPPORT
+
+#include <afxtempl.h>
 
 #include "cepluginsdk.h"
 #include "resource.h"
@@ -46,8 +49,10 @@
 
 #include <windows.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <wchar.h>
 
-#include <string> 
+#include <string>
 #include <sstream>
 #include <vector>
 #include <algorithm>
@@ -74,36 +79,37 @@ extern "C" FILE * __cdecl __iob_func(void) { return _iob; }
 union EFlags {
 	DWORD dwValue;
 	struct {
-		bool CF			: 1;
-		bool reserved0	: 1;
-		bool PF			: 1;
-		bool reserved1	: 1;
-		bool AF			: 1;
-		bool reserved2	: 1;
-		bool ZF			: 1;
-		bool SF			: 1;
-		bool TF			: 1;
-		bool IF			: 1;
-		bool DF			: 1;
-		bool OF			: 1;
-		bool IOPL0		: 1;
-		bool IOPL1		: 1;
-		bool NT			: 1;
-		bool reserved3	: 1;
-		bool RF			: 1;
-		bool VM			: 1;
-		bool AC			: 1;
-		bool VIF		: 1;
-		bool VIP		: 1;
-		bool ID			: 1;
+		bool CF : 1;
+		bool reserved0 : 1;
+		bool PF : 1;
+		bool reserved1 : 1;
+		bool AF : 1;
+		bool reserved2 : 1;
+		bool ZF : 1;
+		bool SF : 1;
+		bool TF : 1;
+		bool IF : 1;
+		bool DF : 1;
+		bool OF : 1;
+		bool IOPL0 : 1;
+		bool IOPL1 : 1;
+		bool NT : 1;
+		bool reserved3 : 1;
+		bool RF : 1;
+		bool VM : 1;
+		bool AC : 1;
+		bool VIF : 1;
+		bool VIP : 1;
+		bool ID : 1;
 	};
 };
 
+extern CRITICAL_SECTION g_WatchListCS;
 extern vector<CWatch*> g_WatchList;
 extern size_t* g_pCurrentDebuggerInterface;
 
 #pragma pack(push, 1)
- 
+
 typedef struct {
 	BYTE Bytes[8];
 }TJclMMRegister;
@@ -130,19 +136,19 @@ typedef struct {
 }TJclXMMRegisters;
 
 typedef struct {
-    WORD FCW;                           // bytes from 0   to 1
-    WORD FSW;                           // bytes from 2   to 3
-    BYTE FTW;                           // byte 4
-    BYTE Reserved1;                     // byte 5
-    WORD FOP;                           // bytes from 6   to 7
-    DWORD FpuIp;					 // bytes from 8   to 11
-    WORD CS;                            // bytes from 12  to 13
-    WORD Reserved2;                     // bytes from 14  to 15
-    DWORD FpuDp;                     // bytes from 16  to 19
-    WORD DS;                            // bytes from 20  to 21
-    WORD Reserved3;                     // bytes from 22  to 23
-    DWORD MXCSR;                     // bytes from 24  to 27
-    DWORD MXCSRMask;                 // bytes from 28  to 31
+	WORD FCW;                           // bytes from 0   to 1
+	WORD FSW;                           // bytes from 2   to 3
+	BYTE FTW;                           // byte 4
+	BYTE Reserved1;                     // byte 5
+	WORD FOP;                           // bytes from 6   to 7
+	DWORD FpuIp;					 // bytes from 8   to 11
+	WORD CS;                            // bytes from 12  to 13
+	WORD Reserved2;                     // bytes from 14  to 15
+	DWORD FpuDp;                     // bytes from 16  to 19
+	WORD DS;                            // bytes from 20  to 21
+	WORD Reserved3;                     // bytes from 22  to 23
+	DWORD MXCSR;                     // bytes from 24  to 27
+	DWORD MXCSRMask;                 // bytes from 28  to 31
 	TJclFPURegisters FPURegisters;      // bytes from 32  to 159
 	TJclXMMRegisters XMMRegisters;      // bytes from 160 to 415
 	BYTE Reserved4[511 - 416 + 1];	// bytes from 416 to 511
@@ -203,9 +209,3 @@ extern TOpenThread* pCE_OpenThread;
 
 BOOL CE_GetThreadContext(HANDLE hThread, PCONTEXT pCtx, BOOL isFrozenThread);
 BOOL CE_SetThreadContext(HANDLE hThread, const PCONTEXT pCtx, BOOL isFrozenThread);
-
-
-//{{AFX_INSERT_LOCATION}}
-// Microsoft Visual C++ will insert additional declarations immediately before the previous line.
-
-#endif // !defined(AFX_STDAFX_H__57FCF902_50F3_49D6_A00A_6DC58836F9CC__INCLUDED_)

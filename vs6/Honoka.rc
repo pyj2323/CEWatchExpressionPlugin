@@ -8,7 +8,7 @@
 // Generated from the TEXTINCLUDE 2 resource.
 //
 #ifndef APSTUDIO_INVOKED
-//#include "targetver.h"
+#include "targetver.h"
 #endif
 #include "afxres.h"
 //#include "verrsrc.h"
@@ -17,7 +17,7 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// í•œêµ­ì–´(ëŒ€í•œë¯¼êµ­) resources
+// ÇÑ±¹¾î(´ëÇÑ¹Î±¹) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_KOR)
 LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
@@ -52,8 +52,8 @@ BEGIN
     "\r\n"
     "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_KOR)\r\n"
     "LANGUAGE 18, 1\r\n"
-    "#include ""res\\Honoka.rc2""  // Microsoft Visual C++ ì´ì™¸ì˜ ë‹¤ë¥¸ ë„êµ¬ì—ì„œ í¸ì§‘í•œ ë¦¬ì†ŒìŠ¤ì…ë‹ˆë‹¤.\r\n"
-    "#include ""l.KOR\\afxres.rc""      // í‘œì¤€ êµ¬ì„± ìš”ì†Œ\r\n"
+    "#include ""res\\Honoka.rc2""  // Microsoft Visual C++ ÀÌ¿ÜÀÇ ´Ù¸¥ µµ±¸¿¡¼­ ÆíÁıÇÑ ¸®¼Ò½ºÀÔ´Ï´Ù.\r\n"
+    "#include ""l.KOR\\afxres.rc""      // Ç¥ÁØ ±¸¼º ¿ä¼Ò\r\n"
     "#endif\r\n"
     "\0"
 END
@@ -115,7 +115,27 @@ BEGIN
     0
 END
 
-#endif    // í•œêµ­ì–´(ëŒ€í•œë¯¼êµ­) resources
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Accelerator
+//
+
+IDR_ACCELERATOR1 ACCELERATORS
+BEGIN
+    "A",            ID_ACCELERATOR_CTRL_A,  VIRTKEY, CONTROL, NOINVERT
+    "C",            ID_ACCELERATOR_CTRL_C,  VIRTKEY, CONTROL, NOINVERT
+    "G",            ID_ACCELERATOR_CTRL_G,  VIRTKEY, CONTROL, NOINVERT
+    "R",            ID_ACCELERATOR_CTRL_R,  VIRTKEY, CONTROL, NOINVERT
+    "T",            ID_ACCELERATOR_CTRL_T,  VIRTKEY, CONTROL, NOINVERT
+END
+
+IDR_ACCELERATOR2 ACCELERATORS
+BEGIN
+    "T",            ID_ACCELERATOR_CTRL_T,  VIRTKEY, CONTROL, NOINVERT
+END
+
+#endif    // ÇÑ±¹¾î(´ëÇÑ¹Î±¹) resources
 /////////////////////////////////////////////////////////////////////////////
 
 
@@ -132,8 +152,8 @@ END
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_KOR)
 LANGUAGE 18, 1
-#include "res\Honoka.rc2"  // Microsoft Visual C++ ì´ì™¸ì˜ ë‹¤ë¥¸ ë„êµ¬ì—ì„œ í¸ì§‘í•œ ë¦¬ì†ŒìŠ¤ì…ë‹ˆë‹¤.
-#include "l.KOR\afxres.rc"      // í‘œì¤€ êµ¬ì„± ìš”ì†Œ
+#include "res\Honoka.rc2"  // Microsoft Visual C++ ÀÌ¿ÜÀÇ ´Ù¸¥ µµ±¸¿¡¼­ ÆíÁıÇÑ ¸®¼Ò½ºÀÔ´Ï´Ù.
+#include "l.KOR\afxres.rc"      // Ç¥ÁØ ±¸¼º ¿ä¼Ò
 #endif
 
 /////////////////////////////////////////////////////////////////////////////

@@ -10,6 +10,9 @@
 
 #include "targetver.h"
 
+#define _AFX_NO_DB_SUPPORT
+#define _AFX_NO_DAO_SUPPORT
+
 #define _ATL_CSTRING_EXPLICIT_CONSTRUCTORS      // 일부 CString 생성자는 명시적으로 선언됩니다.
 
 #include <afxwin.h>         // MFC 핵심 및 표준 구성 요소입니다.
@@ -36,6 +39,8 @@
 #include <afxcmn.h>                     // Windows 공용 컨트롤에 대한 MFC 지원입니다.
 #endif // _AFX_NO_AFXCMN_SUPPORT
 
+#include <afxtempl.h>
+
 #include "cepluginsdk.h"
 #include "resource.h"
 #include "Watch.h"
@@ -44,6 +49,8 @@
 
 #include <windows.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <wchar.h>
 
 #include <string>
 #include <sstream>
@@ -72,36 +79,37 @@ extern "C" FILE * __cdecl __iob_func(void) { return _iob; }
 union EFlags {
 	DWORD dwValue;
 	struct {
-		bool CF			: 1;
-		bool reserved0	: 1;
-		bool PF			: 1;
-		bool reserved1	: 1;
-		bool AF			: 1;
-		bool reserved2	: 1;
-		bool ZF			: 1;
-		bool SF			: 1;
-		bool TF			: 1;
-		bool IF			: 1;
-		bool DF			: 1;
-		bool OF			: 1;
-		bool IOPL0		: 1;
-		bool IOPL1		: 1;
-		bool NT			: 1;
-		bool reserved3	: 1;
-		bool RF			: 1;
-		bool VM			: 1;
-		bool AC			: 1;
-		bool VIF		: 1;
-		bool VIP		: 1;
-		bool ID			: 1;
+		bool CF : 1;
+		bool reserved0 : 1;
+		bool PF : 1;
+		bool reserved1 : 1;
+		bool AF : 1;
+		bool reserved2 : 1;
+		bool ZF : 1;
+		bool SF : 1;
+		bool TF : 1;
+		bool IF : 1;
+		bool DF : 1;
+		bool OF : 1;
+		bool IOPL0 : 1;
+		bool IOPL1 : 1;
+		bool NT : 1;
+		bool reserved3 : 1;
+		bool RF : 1;
+		bool VM : 1;
+		bool AC : 1;
+		bool VIF : 1;
+		bool VIP : 1;
+		bool ID : 1;
 	};
 };
 
+extern CRITICAL_SECTION g_WatchListCS;
 extern vector<CWatch*> g_WatchList;
 extern size_t* g_pCurrentDebuggerInterface;
 
 #pragma pack(push, 1)
- 
+
 typedef struct {
 	BYTE Bytes[8];
 }TJclMMRegister;
@@ -128,19 +136,19 @@ typedef struct {
 }TJclXMMRegisters;
 
 typedef struct {
-    WORD FCW;                           // bytes from 0   to 1
-    WORD FSW;                           // bytes from 2   to 3
-    BYTE FTW;                           // byte 4
-    BYTE Reserved1;                     // byte 5
-    WORD FOP;                           // bytes from 6   to 7
-    DWORD FpuIp;					 // bytes from 8   to 11
-    WORD CS;                            // bytes from 12  to 13
-    WORD Reserved2;                     // bytes from 14  to 15
-    DWORD FpuDp;                     // bytes from 16  to 19
-    WORD DS;                            // bytes from 20  to 21
-    WORD Reserved3;                     // bytes from 22  to 23
-    DWORD MXCSR;                     // bytes from 24  to 27
-    DWORD MXCSRMask;                 // bytes from 28  to 31
+	WORD FCW;                           // bytes from 0   to 1
+	WORD FSW;                           // bytes from 2   to 3
+	BYTE FTW;                           // byte 4
+	BYTE Reserved1;                     // byte 5
+	WORD FOP;                           // bytes from 6   to 7
+	DWORD FpuIp;					 // bytes from 8   to 11
+	WORD CS;                            // bytes from 12  to 13
+	WORD Reserved2;                     // bytes from 14  to 15
+	DWORD FpuDp;                     // bytes from 16  to 19
+	WORD DS;                            // bytes from 20  to 21
+	WORD Reserved3;                     // bytes from 22  to 23
+	DWORD MXCSR;                     // bytes from 24  to 27
+	DWORD MXCSRMask;                 // bytes from 28  to 31
 	TJclFPURegisters FPURegisters;      // bytes from 32  to 159
 	TJclXMMRegisters XMMRegisters;      // bytes from 160 to 415
 	BYTE Reserved4[511 - 416 + 1];	// bytes from 416 to 511

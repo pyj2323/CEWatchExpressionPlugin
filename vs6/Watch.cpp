@@ -7,10 +7,8 @@
 //#include "afxdialogex.h"
 
 
-#define INDEX_COUNT 0
-#define INDEX_VALUE 1
-
 extern "C" BOOL IsWow64Process(HANDLE hProcess, PBOOL Wow64Process);
+#define LVS_EX_DOUBLEBUFFER     0x00010000
 
 // CWatch 대화 상자입니다.
 
@@ -30,30 +28,32 @@ BOOL CWatch::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 
+	m_hAccel = ::LoadAccelerators(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDR_ACCELERATOR2));
+
 	GetWindowRect(&m_DlgRect);
 	m_listLog.GetWindowRect(&m_ListRect);
 	m_bRect = TRUE;
 
 	BOOL bWow64 = FALSE;
-	if(!IsWow64Process(*CheatEngine.OpenedProcessHandle, &bWow64)) {
+	if (!IsWow64Process(*CheatEngine.OpenedProcessHandle, &bWow64)) {
 		MessageBox(L"Open a process first.", 0, MB_ICONERROR);
 		return FALSE;
 	}
 
 	CString szTitle;
-	if(bWow64)
+	if (bWow64)
 		szTitle.Format(L"Watch expression at address %08I64X", m_pAddress);
 	else
 		szTitle.Format(L"Watch expression at address %016I64X", m_pAddress);
 	SetWindowText(szTitle);
-
-	m_listLog.SetExtendedStyle(LVS_EX_FULLROWSELECT);
 
 	CRect rect;
 	m_listLog.GetClientRect(&rect);
 
 	m_listLog.InsertColumn(INDEX_COUNT, L"Count", LVCFMT_LEFT, 50);
 	m_listLog.InsertColumn(INDEX_VALUE, L"Value", LVCFMT_LEFT, rect.Width() - 50);
+
+	m_listLog.SetExtendedStyle(m_listLog.GetExtendedStyle() | LVS_EX_DOUBLEBUFFER | LVS_EX_FULLROWSELECT);
 
 	m_comboType.InsertString(OUTPUT_INTEGER, L"Integer");
 	m_comboType.InsertString(OUTPUT_OPCODE, L"Opcode");
@@ -94,16 +94,17 @@ void CWatch::DoDataExchange(CDataExchange* pDX)
 BEGIN_MESSAGE_MAP(CWatch, CDialog)
 	ON_WM_CLOSE()
 	ON_BN_CLICKED(IDC_BUTTON_STATE, CWatch::OnBnClickedButtonState)
-	ON_MESSAGE(WM_GETCONTEXT, CWatch::OnGetcontext)
+//	ON_MESSAGE(WM_GETCONTEXT, CWatch::OnGetcontext)
 	ON_BN_CLICKED(IDC_BUTTON_CLEAR, CWatch::OnBnClickedButtonClear)
 	ON_BN_CLICKED(IDC_RADIO_OPT1, CWatch::OnBnClickedRadioOpt1)
 	ON_CBN_SELCHANGE(IDC_COMBO_TYPE, CWatch::OnCbnSelchangeComboType)
 	ON_BN_CLICKED(IDC_RADIO_OPT2, CWatch::OnBnClickedRadioOpt2)
 	ON_BN_CLICKED(IDC_RADIO_OPT3, CWatch::OnBnClickedRadioOpt3)
-ON_NOTIFY(NM_DBLCLK, IDC_LIST_LOG, CWatch::OnDblclkListLog)
-ON_WM_SIZE()
-ON_WM_SIZING()
-ON_WM_GETMINMAXINFO()
+	ON_WM_SIZE()
+	ON_WM_SIZING()
+	ON_WM_GETMINMAXINFO()
+	ON_WM_RBUTTONDOWN()
+	ON_COMMAND(ID_ACCELERATOR_CTRL_T, CWatch::OnAcceleratorCtrlT)
 END_MESSAGE_MAP()
 
 
@@ -111,7 +112,7 @@ BOOL ParseInfo::bX86 = 0;
 
 void CWatch::OnBnClickedButtonState()
 {
-	if(m_bCapture) {
+	if (m_bCapture) {
 		m_btnState.SetWindowText(L"Start");
 		m_editExp.EnableWindow(TRUE);
 		m_comboType.EnableWindow(TRUE);
@@ -124,8 +125,8 @@ void CWatch::OnBnClickedButtonState()
 	}
 
 	BOOL bWow64;
-	if(!IsWow64Process(*CheatEngine.OpenedProcessHandle, &bWow64)) {
-		MessageBox(L"OpenProcess Failed.\n", L"Error", MB_ICONERROR);
+	if (!IsWow64Process(*CheatEngine.OpenedProcessHandle, &bWow64)) {
+		MessageBox(L"OpenProcess Failed.", L"Error", MB_ICONERROR);
 		return;
 	}
 
@@ -133,42 +134,66 @@ void CWatch::OnBnClickedButtonState()
 
 	m_editExp.GetWindowText(m_szExp);
 
-	CONTEXT ctx = {0};
+	CONTEXT ctx = { 0 };
 	Parser parser(ctx);
-	ParseInfo exp_info;
+	ParseInfo exp_info = parser.Parse(m_szExp);
 
-	if(!parser.Parse(m_szExp, exp_info)) {
-		MessageBox(L"Parsing expression failed.", L"Error", MB_ICONERROR);
+	CString TypeResult;
+	switch (exp_info.Type) {
+	case TYPE_BIT:		TypeResult = "Result is BIT type.\n"; break;
+	case TYPE_BYTE:		TypeResult = "Result is BYTE type.\n"; break;
+	case TYPE_WORD:		TypeResult = "Result is WORD type.\n"; break;
+	case TYPE_DWORD:	TypeResult = "Result is DWORD type.\n"; break;
+	case TYPE_QWORD:	TypeResult = "Result is QWORD type.\n"; break;
+	case TYPE_FLOAT:	TypeResult = "Result is FLOAT type.\n"; break;
+	case TYPE_DOUBLE:	TypeResult = "Result is DOUBLE type.\n"; break;
+	}
+
+	if (exp_info.Error & ERROR_PARSE || exp_info.Error & ERROR_TYPE) {
+		MessageBox(L"Parsing failed.", L"Error", MB_ICONERROR);
 		return;
 	}
 
-	switch(m_nType) {
+	switch (m_nType) {
 	case OUTPUT_INTEGER:
+		if (exp_info.IsFloating()) {
+			MessageBox(TypeResult + L"Integer data required.", L"Error", MB_ICONERROR);
+			return;
+		}
+		break;
+	case OUTPUT_FLOAT:
+		if (exp_info.Type != TYPE_FLOAT) {
+			MessageBox(TypeResult + L"Float data required.", L"Error", MB_ICONERROR);
+			return;
+		}
+		break;
+	case OUTPUT_DOUBLE:
+		if (exp_info.Type != TYPE_DOUBLE) {
+			MessageBox(TypeResult + L"Double data required.", L"Error", MB_ICONERROR);
+			return;
+		}
 		break;
 	case OUTPUT_STRING:
 	case OUTPUT_AOB:
-		{
-			m_editLen.GetWindowText(m_szLen);
+	{
+		m_editLen.GetWindowText(m_szLen);
 
-			ParseInfo len_info;
-			if(!parser.Parse(m_szLen, len_info)) {
-				MessageBox(L"Parsing data length failed.", L"Error", MB_ICONERROR);
-				return;
-			}
-		}	
+		ParseInfo len_info = parser.Parse(m_szLen);
+
+		if (len_info.Error & ERROR_PARSE || len_info.Error & ERROR_TYPE || len_info.IsFloating()) {
+			MessageBox(L"Parsing length failed.", L"Error", MB_ICONERROR);
+			return;
+		}
+	}
 	case OUTPUT_OPCODE:
-	case OUTPUT_FLOAT:
-	case OUTPUT_DOUBLE:
 		//Pointer type checking
-		if(m_nType != OUTPUT_INTEGER) {
-			if(bWow64 && exp_info.type != TYPE_DWORD) {
-				MessageBox(L"4 bytes(DWORD) pointer required.", L"Error", MB_ICONERROR);
-				return;
-			}
-			if(!bWow64 && exp_info.type != TYPE_QWORD) {
-				MessageBox(L"8 bytes(QWORD) pointer required.", L"Error", MB_ICONERROR);
-				return;
-			}
+		if (bWow64 && exp_info.Type != TYPE_DWORD) {
+			MessageBox(TypeResult + L"4 bytes(DWORD) pointer required.", L"Error", MB_ICONERROR);
+			return;
+		}
+		if (!bWow64 && exp_info.Type != TYPE_QWORD) {
+			MessageBox(TypeResult + L"8 bytes(QWORD) pointer required.", L"Error", MB_ICONERROR);
+			return;
 		}
 		break;
 	}
@@ -183,43 +208,200 @@ void CWatch::OnBnClickedButtonState()
 	m_bCapture = TRUE;
 }
 
+void CWatch::AddItem(CONTEXT& ctx) {
+	Parser parser(ctx);
+	ParseInfo exp_info = parser.Parse(m_szExp);
 
-afx_msg LRESULT CWatch::OnGetcontext(WPARAM wParam, LPARAM lParam)
-{
-	CString szValue = (const wchar_t*)wParam;
-	delete (const wchar_t*)wParam;
+	CString szValue;
+	char szBuffer[0x201];
+	WCHAR wBuffer[0x201];
 
-	BOOL bExist = FALSE;
+	if (exp_info.Error & ERROR_PARSE)
+		return;
 
-	int i;
-	for(i = 0 ; i < m_listLog.GetItemCount() ; i++) {
-		CString szItemValue = m_listLog.GetItemText(i, INDEX_VALUE);
-		if(szValue == szItemValue) {
-			bExist = TRUE;
+	if (exp_info.Error & ERROR_PAGEFAULT)
+		szValue = L"Error : Access violation";
+	else if (exp_info.Error & ERROR_DEVIDEZERO)
+		szValue = L"Error : Divide by zero";
+	else if (exp_info.Error == 0) {
+		switch (m_nType) {
+		case OUTPUT_INTEGER:
+			switch (m_nIntShowType) {
+			case OUTPUT_DEC_SIGNED:
+				szValue.Format(L"%I64d", exp_info.s64Value);
+				break;
+			case OUTPUT_DEC_UNSIGNED:
+				szValue.Format(L"%I64u", exp_info.u64Value);
+				break;
+			case OUTPUT_HEX:
+				switch (exp_info.Type) {
+				case TYPE_BIT:
+					szValue = exp_info.bValue ? L"true" : L"false";
+					break;
+				case TYPE_BYTE:
+					szValue.Format(L"0x%02I64X", exp_info.u8Value);
+					break;
+				case TYPE_WORD:
+					szValue.Format(L"0x%04I64X", exp_info.u16Value);
+					break;
+				case TYPE_DWORD:
+					szValue.Format(L"0x%08I64X", exp_info.u32Value);
+					break;
+				case TYPE_QWORD:
+					szValue.Format(L"0x%016I64X", exp_info.u64Value);
+					break;
+				}
+				break;
+			}
 			break;
+		case OUTPUT_OPCODE:
+		{
+			if (CheatEngine.Disassembler(exp_info.u64Value, szBuffer, sizeof(szBuffer))) {
+				MultiByteToWideChar(CP_ACP, 0, szBuffer, -1, wBuffer, sizeof(wBuffer));
+				szValue = wBuffer;
+			}
+			else
+				szValue = L"Error : Access violation";
+			break;
+		}
+		case OUTPUT_FLOAT:
+			szValue.Format(L"%f", exp_info.fValue);
+			break;
+		case OUTPUT_DOUBLE:
+			szValue.Format(L"%f", exp_info.dValue);
+			break;
+			break;
+		case OUTPUT_STRING:
+		{
+			ParseInfo len_info = parser.Parse(m_szLen);
+			if (len_info.Error & ERROR_PARSE)
+				break;
+			if (len_info.Error & ERROR_PAGEFAULT) {
+				szValue = L"Error : Access violation";
+				break;
+			}
+			if (len_info.Error & ERROR_DEVIDEZERO) {
+				szValue = L"Error : Divide by zero";
+				break;
+			}
+
+			SIZE_T nRead, nLen = len_info.u64Value;
+			if (nLen >= 0x200) {
+				szValue = L"Error : Length must be less than 512.";
+				break;
+			}
+			if (nLen == 0) {
+				szValue = L"Error : Length is 0.";
+				break;
+			}
+
+			switch (m_nStrShowType) {
+			case OUTPUT_ANSI:
+			{
+				BOOL bResult = CE_ReadProcessMemory(
+					*CheatEngine.OpenedProcessHandle,
+					(LPCVOID)exp_info.u64Value, szBuffer, nLen, &nRead);
+
+				szBuffer[nLen] = 0;
+
+				if (bResult && nRead == nLen) {
+					MultiByteToWideChar(CP_ACP, 0, szBuffer, -1, wBuffer, sizeof(wBuffer));
+					szValue.Format(L"\"%ws\"", wBuffer);
+				}
+				else
+					szValue = L"Error : Access violation";
+
+				break;
+			}
+			case OUTPUT_UTF8:
+			{
+				BOOL bResult = CE_ReadProcessMemory(
+					*CheatEngine.OpenedProcessHandle,
+					(LPCVOID)exp_info.u64Value, szBuffer, nLen, &nRead);
+
+				szBuffer[nLen] = 0;
+
+				if (bResult && nRead == nLen) {
+					MultiByteToWideChar(CP_UTF8, 0, szBuffer, -1, wBuffer, sizeof(wBuffer));
+					szValue.Format(L"\"%ws\"", wBuffer);
+				}
+				else
+					szValue = L"Error : Access violation";
+
+				break;
+			}
+			case OUTPUT_UTF16:
+			{
+				BOOL bResult = CE_ReadProcessMemory(
+					*CheatEngine.OpenedProcessHandle,
+					(LPCVOID)exp_info.u64Value, wBuffer, nLen * sizeof(WCHAR), &nRead);
+
+				wBuffer[nLen] = 0;
+
+				if (bResult && nRead == nLen * sizeof(WCHAR))
+					szValue.Format(L"\"%ws\"", wBuffer);
+				else
+					szValue = L"Error : Access violation";
+
+				break;
+			}
+			}
+			break;
+		}
+		case OUTPUT_AOB:
+		{
+			ParseInfo len_info = parser.Parse(m_szLen);
+
+			if (len_info.Error & ERROR_PARSE)
+				break;
+			if (len_info.Error & ERROR_PAGEFAULT) {
+				szValue = L"Error : Access violation";
+				break;
+			}
+			if (len_info.Error & ERROR_DEVIDEZERO) {
+				szValue = L"Error : Divide by zero";
+				break;
+			}
+
+			SIZE_T nRead, nLen = len_info.u64Value;
+
+			if (nLen >= 150) {
+				szValue = L"Error : Length must be less than 150.";
+				break;
+			}
+			if (nLen == 0) {
+				szValue = L"Error : Length is 0.";
+				break;
+			}
+
+			BOOL bResult = CE_ReadProcessMemory(
+				*CheatEngine.OpenedProcessHandle,
+				(LPCVOID)exp_info.u64Value, szBuffer, nLen, &nRead);
+
+			if (bResult && nRead == nLen) {
+				CString szByte;
+				for (int i = 0; i < nLen; i++) {
+					szByte.Format(L"%02X", (BYTE)szBuffer[i]);
+					szValue += szByte;
+					if (i < nLen - 1)
+						szValue += L" ";
+				}
+			}
+			else
+				szValue = L"Error : Access violation";
+
+			break;
+		}
 		}
 	}
 
-	if(bExist) {
-		//Add count
-		CString szCount = m_listLog.GetItemText(i, INDEX_COUNT);
-		UINT uCnt = _wtoi(szCount);
-		szCount.Format(L"%d", uCnt + 1);
-		m_listLog.SetItemText(i, INDEX_COUNT, szCount);
-	}
-	else {
-		//Create new item
-		int n = m_listLog.InsertItem(i, L"");
-		m_listLog.SetItemText(n, INDEX_COUNT, L"1");
-		m_listLog.SetItemText(n, INDEX_VALUE, szValue);
-	}
+	m_listLog.AddItem(szValue);
+}
 
-	return 0;
+void CWatch::OnBnClickedButtonClear() {
+	m_listLog.Clear();
 }
-void CWatch::OnBnClickedButtonClear()
-{
-	m_listLog.DeleteAllItems();
-}
+
 void CWatch::OnCbnSelchangeComboType()
 {
 	OutputType type = (OutputType)m_comboType.GetCurSel();
@@ -238,7 +420,7 @@ void CWatch::OnCbnSelchangeComboType()
 	m_radioOpt2.ShowWindow(SW_HIDE);
 	m_radioOpt3.ShowWindow(SW_HIDE);
 
-	switch(type) {
+	switch (type) {
 	case OUTPUT_INTEGER:
 		m_radioOpt1.EnableWindow(TRUE);
 		m_radioOpt2.EnableWindow(TRUE);
@@ -255,7 +437,7 @@ void CWatch::OnCbnSelchangeComboType()
 		m_radioOpt2.ShowWindow(SW_NORMAL);
 		m_radioOpt3.ShowWindow(SW_NORMAL);
 		break;
-	case OUTPUT_OPCODE:	
+	case OUTPUT_OPCODE:
 		break;
 	case OUTPUT_FLOAT:
 	case OUTPUT_DOUBLE:
@@ -267,7 +449,7 @@ void CWatch::OnCbnSelchangeComboType()
 		m_radioOpt1.EnableWindow(TRUE);
 		m_radioOpt2.EnableWindow(TRUE);
 		m_radioOpt3.EnableWindow(TRUE);
-		
+
 		m_radioOpt1.SetWindowText(L"ANSI");
 		m_radioOpt2.SetWindowText(L"UTF-8");
 		m_radioOpt3.SetWindowText(L"UTF-16");
@@ -293,9 +475,10 @@ void CWatch::OnCbnSelchangeComboType()
 
 	m_nType = type;
 }
+
 void CWatch::OnBnClickedRadioOpt1()
 {
-	switch(m_nType) {
+	switch (m_nType) {
 	case OUTPUT_INTEGER:
 		m_nIntShowType = OUTPUT_DEC_SIGNED;
 		break;
@@ -304,9 +487,10 @@ void CWatch::OnBnClickedRadioOpt1()
 		break;
 	}
 }
+
 void CWatch::OnBnClickedRadioOpt2()
 {
-	switch(m_nType) {
+	switch (m_nType) {
 	case OUTPUT_INTEGER:
 		m_nIntShowType = OUTPUT_DEC_UNSIGNED;
 		break;
@@ -315,9 +499,10 @@ void CWatch::OnBnClickedRadioOpt2()
 		break;
 	}
 }
+
 void CWatch::OnBnClickedRadioOpt3()
 {
-	switch(m_nType) {
+	switch (m_nType) {
 	case OUTPUT_INTEGER:
 		m_nIntShowType = OUTPUT_HEX;
 		break;
@@ -327,51 +512,10 @@ void CWatch::OnBnClickedRadioOpt3()
 	}
 }
 
-
-VOID __stdcall SelectMemoryViewAddress(LPVOID Address) {
-	char szScript[0x100];
-	sprintf(szScript,
-		"local mv=getMemoryViewForm()\n"
-		"mv.Disassemblerview.SelectedAddress = 0x%I64X\n"
-		"mv.show()\n", Address);
-
-	//This should open a memoryview window at specified address
-	lua_State *lua = (lua_State*)CheatEngine.GetLuaState();
-	if (!lua)
-		return;
-
-	int i = lua_gettop(lua);
-	luaL_dostring(lua, szScript);
-	lua_settop(lua, i);	//restore
-}
-
-void CWatch::OnDblclkListLog(NMHDR *pNMHDR, LRESULT *pResult)
-{
-	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
-	*pResult = 0;
-
-	POSITION pos = m_listLog.GetFirstSelectedItemPosition();
-	if(pos == NULL)
-		return;
-
-	int nItem = m_listLog.GetNextSelectedItem(pos);
-	CString szValue = m_listLog.GetItemText(nItem, INDEX_VALUE);
-
-	int i = -1;
-
-	i = szValue.Find(L" - ", 0);
-	if(i == -1)
-		return;
-
-	DWORD64 Address;
-	if(swscanf(CString(L"0x") + szValue.Left(i), L"%I64X", &Address) == 1)
-		CheatEngine.MainThreadCall(SelectMemoryViewAddress, (LPVOID)Address);
-}
-
 void CWatch::OnSize(UINT nType, int cx, int cy)
 {
 	CDialog::OnSize(nType, cx, cy);
-	if(!m_bRect)
+	if (!m_bRect)
 		return;
 
 	CRect DlgRect, ListRect;
@@ -386,15 +530,14 @@ void CWatch::OnSize(UINT nType, int cx, int cy)
 
 	m_listLog.SetWindowPos(NULL, 0, 0, nListWidth, nListHeight, SWP_NOMOVE);
 
-	int nColumnWidth = m_listLog.GetColumnWidth(INDEX_VALUE) + nListWidth - ListRect.Width();
+	int nColumnWidth = nListWidth - m_listLog.GetColumnWidth(INDEX_COUNT) - 1;
 	m_listLog.SetColumnWidth(INDEX_VALUE, nColumnWidth);
 }
-
 
 void CWatch::OnSizing(UINT fwSide, LPRECT pRect)
 {
 	CDialog::OnSizing(fwSide, pRect);
-	if(!m_bRect)
+	if (!m_bRect)
 		return;
 
 	CRect DlgRect, ListRect;
@@ -409,17 +552,40 @@ void CWatch::OnSizing(UINT fwSide, LPRECT pRect)
 
 	m_listLog.SetWindowPos(NULL, 0, 0, nListWidth, nListHeight, SWP_NOMOVE);
 
-	int nColumnWidth = m_listLog.GetColumnWidth(INDEX_VALUE) + nListWidth - ListRect.Width();
+	int nColumnWidth = nListWidth - m_listLog.GetColumnWidth(INDEX_COUNT) - 1;
 	m_listLog.SetColumnWidth(INDEX_VALUE, nColumnWidth);
 }
-
 
 void CWatch::OnGetMinMaxInfo(MINMAXINFO* lpMMI)
 {
 	CDialog::OnGetMinMaxInfo(lpMMI);
-	if(!m_bRect)
+	if (!m_bRect)
 		return;
 
 	lpMMI->ptMinTrackSize.x = m_DlgRect.Width();
-	lpMMI->ptMinTrackSize.y = m_DlgRect.Height();
+	if (m_listLog.m_bSingleMode) {
+		lpMMI->ptMinTrackSize.y = 210;
+		lpMMI->ptMaxTrackSize.y = 210;
+	}
+	else {
+		lpMMI->ptMinTrackSize.y = m_DlgRect.Height();
+	}
+}
+
+void CWatch::OnRButtonDown(UINT nFlags, CPoint point)
+{
+	m_listLog.HandleRClick();
+	CDialog::OnRButtonDown(nFlags, point);
+}
+
+void CWatch::OnAcceleratorCtrlT() {
+	m_listLog.ToggleMode();
+}
+
+BOOL CWatch::PreTranslateMessage(MSG* pMsg)
+{
+	if (::TranslateAccelerator(m_hWnd, m_hAccel, pMsg))
+		return TRUE;
+
+	return CDialog::PreTranslateMessage(pMsg);
 }

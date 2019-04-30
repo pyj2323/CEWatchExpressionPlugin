@@ -1,6 +1,7 @@
 #pragma once
 #include "afxwin.h"
-
+#include <map>
+#include "MyListCtrl.h"
 
 // CWatch 대화 상자입니다.
 
@@ -33,7 +34,7 @@ public:
 	CWatch(PVOID pAddress, CWnd* pParent = NULL);
 	virtual ~CWatch();
 
-// 대화 상자 데이터입니다.
+	// 대화 상자 데이터입니다.
 	enum { IDD = IDD_WATCH };
 
 	PVOID m_pAddress;
@@ -49,18 +50,19 @@ public:
 	CString m_szExp;
 	CString m_szLen;
 
+	HACCEL m_hAccel;
+
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 지원입니다.
 	DECLARE_MESSAGE_MAP()
 public:
+	void AddItem(CONTEXT& ctx);
+
 	afx_msg void OnBnClickedButtonState();
 	virtual BOOL OnInitDialog();
 	CButton m_btnState;
-protected:
-	afx_msg LRESULT OnGetcontext(WPARAM wParam, LPARAM lParam);
-public:
 	afx_msg void OnBnClickedButtonClear();
-	CListCtrl m_listLog;
+	CMyListCtrl m_listLog;
 	CEdit m_editExp;
 	CComboBox m_comboType;
 	CEdit m_editLen;
@@ -72,8 +74,10 @@ public:
 	afx_msg void OnCbnSelchangeComboType();
 	afx_msg void OnBnClickedRadioOpt2();
 	afx_msg void OnBnClickedRadioOpt3();
-	afx_msg void OnDblclkListLog(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnSizing(UINT fwSide, LPRECT pRect);
 	afx_msg void OnGetMinMaxInfo(MINMAXINFO* lpMMI);
+	afx_msg void OnRButtonDown(UINT nFlags, CPoint point);
+	virtual BOOL PreTranslateMessage(MSG* pMsg);
+	afx_msg void OnAcceleratorCtrlT();
 };

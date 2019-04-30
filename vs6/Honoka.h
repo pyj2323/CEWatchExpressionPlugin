@@ -1,22 +1,17 @@
-// Honoka.h : main header file for the HONOKA DLL
+// Honoka.h : Honoka DLL의 기본 헤더 파일입니다.
 //
 
-#if !defined(AFX_HONOKA_H__57A3B721_45E5_4D64_B760_54A4F635D4EF__INCLUDED_)
-#define AFX_HONOKA_H__57A3B721_45E5_4D64_B760_54A4F635D4EF__INCLUDED_
-
-#if _MSC_VER > 1000
 #pragma once
-#endif // _MSC_VER > 1000
 
 #ifndef __AFXWIN_H__
-	#error include 'stdafx.h' before including this file for PCH
+#error "PCH에 대해 이 파일을 포함하기 전에 'stdafx.h'를 포함합니다."
 #endif
 
-#include "resource.h"		// main symbols
+#include "resource.h"		// 주 기호입니다.
 
-/////////////////////////////////////////////////////////////////////////////
+
 // CHonokaApp
-// See Honoka.cpp for the implementation of this class
+// 이 클래스의 구현을 보려면 Honoka.cpp를 참조하십시오.
 //
 
 class CHonokaApp : public CWinApp
@@ -24,17 +19,9 @@ class CHonokaApp : public CWinApp
 public:
 	CHonokaApp();
 
-// 재정의입니다.
+	// 재정의입니다.
 public:
 	virtual BOOL InitInstance();
 
 	DECLARE_MESSAGE_MAP()
 };
-
-
-/////////////////////////////////////////////////////////////////////////////
-
-//{{AFX_INSERT_LOCATION}}
-// Microsoft Visual C++ will insert additional declarations immediately before the previous line.
-
-#endif // !defined(AFX_HONOKA_H__57A3B721_45E5_4D64_B760_54A4F635D4EF__INCLUDED_)

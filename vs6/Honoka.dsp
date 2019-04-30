@@ -135,6 +135,10 @@ SOURCE=.\Honoka.rc
 # End Source File
 # Begin Source File
 
+SOURCE=.\MyListCtrl.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\StdAfx.cpp
 # ADD CPP /Yc"stdafx.h"
 # End Source File
@@ -160,6 +164,10 @@ SOURCE=.\Honoka.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\MyListCtrl.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\parser.h
 # End Source File
 # Begin Source File
@@ -169,6 +177,10 @@ SOURCE=.\Resource.h
 # Begin Source File
 
 SOURCE=.\StdAfx.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\targetver.h
 # End Source File
 # Begin Source File
 
