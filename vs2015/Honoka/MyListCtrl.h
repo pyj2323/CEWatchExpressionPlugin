@@ -42,4 +42,5 @@ public:
 	//	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
 	virtual void PreSubclassWindow();
+	afx_msg void OnAcceleratorCtrlL();
 };

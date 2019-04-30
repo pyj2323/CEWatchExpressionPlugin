@@ -7,8 +7,8 @@
 //#include "afxdialogex.h"
 
 
-//extern "C" BOOL IsWow64Process(HANDLE hProcess, PBOOL Wow64Process);
-//#define LVS_EX_DOUBLEBUFFER     0x00010000
+extern "C" BOOL IsWow64Process(HANDLE hProcess, PBOOL Wow64Process);
+#define LVS_EX_DOUBLEBUFFER     0x00010000
 
 // CWatch 대화 상자입니다.
 
@@ -94,7 +94,6 @@ void CWatch::DoDataExchange(CDataExchange* pDX)
 BEGIN_MESSAGE_MAP(CWatch, CDialog)
 	ON_WM_CLOSE()
 	ON_BN_CLICKED(IDC_BUTTON_STATE, CWatch::OnBnClickedButtonState)
-	//	ON_MESSAGE(WM_GETCONTEXT, CWatch::OnGetcontext)
 	ON_BN_CLICKED(IDC_BUTTON_CLEAR, CWatch::OnBnClickedButtonClear)
 	ON_BN_CLICKED(IDC_RADIO_OPT1, CWatch::OnBnClickedRadioOpt1)
 	ON_CBN_SELCHANGE(IDC_COMBO_TYPE, CWatch::OnCbnSelchangeComboType)
@@ -105,6 +104,7 @@ BEGIN_MESSAGE_MAP(CWatch, CDialog)
 	ON_WM_GETMINMAXINFO()
 	ON_WM_RBUTTONDOWN()
 	ON_COMMAND(ID_ACCELERATOR_CTRL_T, CWatch::OnAcceleratorCtrlT)
+	ON_COMMAND(ID_ACCELERATOR_CTRL_L, CWatch::OnAcceleratorCtrlL)
 END_MESSAGE_MAP()
 
 
@@ -588,4 +588,9 @@ BOOL CWatch::PreTranslateMessage(MSG* pMsg)
 		return TRUE;
 
 	return CDialog::PreTranslateMessage(pMsg);
+}
+
+void CWatch::OnAcceleratorCtrlL()
+{
+	m_listLog.Clear();
 }

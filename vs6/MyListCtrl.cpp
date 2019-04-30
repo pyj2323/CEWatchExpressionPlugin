@@ -18,6 +18,7 @@ BEGIN_MESSAGE_MAP(CMyListCtrl, CListCtrl)
 	ON_COMMAND(ID_ACCELERATOR_CTRL_T, CMyListCtrl::OnAcceleratorCtrlT)
 	ON_NOTIFY_REFLECT(NM_RCLICK, CMyListCtrl::OnNMRClick)
 	ON_NOTIFY_REFLECT(LVN_KEYDOWN, CMyListCtrl::OnLvnKeydown)
+	ON_COMMAND(ID_ACCELERATOR_CTRL_L, CMyListCtrl::OnAcceleratorCtrlL)
 END_MESSAGE_MAP()
 
 
@@ -220,6 +221,7 @@ BOOL GetHexViewAddress(CString Input, PUINT64 pAddress) {
 		return FALSE;
 
 	WCHAR* pEnd;
+	errno = 0;
 	*pAddress = _wcstoui64(AddressPart, &pEnd, 16);
 
 	if (errno == 0 && *pEnd == 0)
@@ -236,6 +238,7 @@ BOOL GetDisassemblerViewAddress(CString Input, PUINT64 pAddress) {
 	CString AddressPart = Input.Left(Index);
 
 	WCHAR* pEnd;
+	errno = 0;
 	*pAddress = _wcstoui64(AddressPart, &pEnd, 16);
 
 	if (errno == 0 && *pEnd == 0)
@@ -370,6 +373,7 @@ void CMyListCtrl::OnLvnKeydown(NMHDR *pNMHDR, LRESULT *pResult)
 	*pResult = 0;
 }
 
-
-
-
+void CMyListCtrl::OnAcceleratorCtrlL()
+{
+	Clear();
+}

@@ -796,6 +796,7 @@ public:
 
 		//Decimal constant
 		WCHAR* pEnd;
+		errno = 0;
 		DWORD64 Number = _wcstoui64(szSymbol, &pEnd, 10);
 		if (errno == 0 && *pEnd == 0) {
 			if(Number < 0x100000000)
@@ -805,6 +806,7 @@ public:
 
 		//Float constant
 		if (szSymbol.Find(L'.') != -1) {
+			errno = 0;
 			DOUBLE dNumber = wcstod(szSymbol, &pEnd);
 			if (errno == 0) {
 				if (*pEnd == 0) return ParseInfo(ptr, dNumber, ERROR_NONE);

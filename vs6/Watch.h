@@ -80,4 +80,5 @@ public:
 	afx_msg void OnRButtonDown(UINT nFlags, CPoint point);
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
 	afx_msg void OnAcceleratorCtrlT();
+	afx_msg void OnAcceleratorCtrlL();
 };
