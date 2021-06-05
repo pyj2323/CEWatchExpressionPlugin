@@ -1,4 +1,4 @@
-// Honoka.cpp : ÇØ´ç DLLÀÇ ÃÊ±âÈ­ ·çÆ¾À» Á¤ÀÇÇÕ´Ï´Ù.
+// Honoka.cpp : í•´ë‹¹ DLLì˜ ì´ˆê¸°í™” ë£¨í‹´ì„ ì •ì˜í•©ë‹ˆë‹¤.
 #include "stdafx.h"
 #include "Honoka.h"
 
@@ -10,7 +10,7 @@
 BEGIN_MESSAGE_MAP(CHonokaApp, CWinApp)
 END_MESSAGE_MAP()
 
-// CHonokaApp »ý¼º
+// CHonokaApp ìƒì„±
 CHonokaApp::CHonokaApp() {}
 CHonokaApp theApp;
 BOOL CHonokaApp::InitInstance()
@@ -46,21 +46,13 @@ int __stdcall debugeventplugin(LPDEBUG_EVENT lpDebugEvent) {
 	PVOID pExceptionAddress;
 
 	switch (lpDebugEvent->u.Exception.ExceptionRecord.ExceptionCode) {
-	case STATUS_SINGLE_STEP:		//Hardware BP
-	case 0x4000001E:				//windows debugger on x86 process
-		pExceptionAddress = (PVOID)(ctx.Rip);
-		break;
 	case STATUS_BREAKPOINT:			//Software BP
-	case 0x4000001F:				//windows debugger on x86 process
+	case 0x4000001F:			//windows debugger on x86 process
 		pExceptionAddress = (PVOID)(ctx.Rip - 1);
 		break;
-	case STATUS_ACCESS_VIOLATION:	//Page Exception BP
-		pExceptionAddress = (PVOID)lpDebugEvent->u.Exception.ExceptionRecord.ExceptionInformation[1];
-		if (pExceptionAddress != (PVOID)ctx.Rip)
-			return 0;
-		break;
 	default:
-		return 0;
+		pExceptionAddress = (PVOID)(ctx.Rip);
+		break;
 	}
 
 	EnterCriticalSection(&g_WatchListCS);
