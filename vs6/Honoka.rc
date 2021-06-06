@@ -10,7 +10,7 @@
 #ifndef APSTUDIO_INVOKED
 #include "targetver.h"
 #endif
-#include "afxres.h"
+#include <afxres.h>
 //#include "verrsrc.h"
 
 /////////////////////////////////////////////////////////////////////////////
@@ -155,7 +155,7 @@ END
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_KOR)
 LANGUAGE 18, 1
 #include "res\Honoka.rc2"  // Microsoft Visual C++ 이외의 다른 도구에서 편집한 리소스입니다.
-#include "l.KOR\afxres.rc"      // 표준 구성 요소
+//#include "l.KOR\afxres.rc"      // 표준 구성 요소
 #endif
 
 /////////////////////////////////////////////////////////////////////////////
